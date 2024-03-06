@@ -1,0 +1,56 @@
+alias: YOUR's To-Do Notification
+description: To-do Notifications
+trigger:
+  - platform: time
+    at: "08:00:00"
+  - platform: time
+    at: "12:00:00"
+  - platform: time
+    at: "15:00:00"
+condition: []
+action:
+  - service: todo.get_items
+    metadata: {}
+    data:
+      status: needs_action
+    response_variable: todovar
+    target:
+      entity_id: todo.YOUR_TO_DO_LIST
+  - if:
+      - condition: template
+        value_template: |-
+          {%- for item in todovar['todo.YOUR_TO_DO_LIST']['items'] %}
+            {% if 'due' in item%}
+              {% set delta = as_local(strptime(item['due'], "%Y-%m-%d")) - today_at("00:00") %} 
+              {% if delta.days == 0 %}
+                True
+                {% break %}
+              {% elif delta.days < 0 %}
+                True
+                {% break %}
+              {% endif %}
+            {% endif %}
+          {% endfor -%}
+    then:
+      - service: persistent_notification.create
+        data:
+          notification_id: TASK DUE
+          title: A task is due today!
+          message: A task is due today, check your to-do!!
+        enabled: false
+      - service: notify.mobile_app_YOUR_PHONE
+        data:
+          title: A task is due!
+          message: |
+            {%- for item in todovar['todo.YOUR_TO_DO_LIST']['items'] %}
+              {% if 'due' in item%}
+                {% set delta = as_local(strptime(item['due'], "%Y-%m-%d")) - today_at("00:00") %}
+                {% if delta.days < 0 %} Task OVERDUE by {{ (delta.days | abs) }} day(s)  {{ '\n\n' -}} {{ item['summary'] }}
+                {% elif delta.days == 0 %} Task due TODAY {{ '\n\n' -}} {{ item['summary'] }}
+                {% endif %}
+              {% endif %}
+            {% endfor -%}
+          data:
+            ttl: 0
+            priority: high
+mode: single
