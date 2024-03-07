@@ -15,13 +15,14 @@ action:
       status: needs_action
     response_variable: todovar
     target:
-      entity_id: todo.YOUR_TO_DO_LIST
+      entity_id: todo.YOUR_to_do
   - if:
       - condition: template
         value_template: |-
-          {%- for item in todovar['todo.YOUR_TO_DO_LIST']['items'] %}
+          {%- for item in todovar['todo.YOUR_to_do']['items'] %}
             {% if 'due' in item%}
-              {% set delta = as_local(strptime(item['due'], "%Y-%m-%d")) - today_at("00:00") %} 
+              {% set timeformat = "%Y-%m-%dT%H:%M:%S%z" if 'T' in item['due'] else  "%Y-%m-%d" %}
+              {% set delta = as_local(strptime(item['due'], timeformat)) - today_at("00:00") %} 
               {% if delta.days == 0 %}
                 True
                 {% break %}
@@ -38,13 +39,14 @@ action:
           title: A task is due today!
           message: A task is due today, check your to-do!!
         enabled: false
-      - service: notify.mobile_app_YOUR_PHONE
+      - service: notify.mobile_app_YOURfone
         data:
           title: A task is due!
           message: |
-            {%- for item in todovar['todo.YOUR_TO_DO_LIST']['items'] %}
+            {%- for item in todovar['todo.YOUR_to_do']['items'] %}
               {% if 'due' in item%}
-                {% set delta = as_local(strptime(item['due'], "%Y-%m-%d")) - today_at("00:00") %}
+                {% set timeformat = "%Y-%m-%dT%H:%M:%S%z" if 'T' in item['due'] else  "%Y-%m-%d" %}
+                {% set delta = as_local(strptime(item['due'], timeformat)) - today_at("00:00") %}
                 {% if delta.days < 0 %} Task OVERDUE by {{ (delta.days | abs) }} day(s)  {{ '\n\n' -}} {{ item['summary'] }}
                 {% elif delta.days == 0 %} Task due TODAY {{ '\n\n' -}} {{ item['summary'] }}
                 {% endif %}
@@ -53,4 +55,10 @@ action:
           data:
             ttl: 0
             priority: high
+            tag: todo_notification
+            actions:
+              - action: URI
+                title: Check your to-do list
+                icon: mdi:note
+                uri: /todo
 mode: single
