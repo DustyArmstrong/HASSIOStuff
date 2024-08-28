@@ -43,14 +43,14 @@ action:
         data:
           title: A task is due!
           message: |
-            {%- for item in todovar['todo.YOUR_to_do']['items'] %}
-              {% if 'due' in item%}
-                {% set timeformat = "%Y-%m-%dT%H:%M:%S%z" if 'T' in item['due'] else  "%Y-%m-%d" %}
-                {% set delta = as_local(strptime(item['due'], timeformat)) - today_at("00:00") %}
+            {%- for item in todovar['todo.YOUR_to_do']['items'] -%}
+              {% if 'due' in item -%}
+                {% set timeformat = "%Y-%m-%dT%H:%M:%S%z" if 'T' in item['due'] else  "%Y-%m-%d" -%}
+                {% set delta = as_local(strptime(item['due'], timeformat)) - today_at("00:00") -%}
                 {% if delta.days < 0 %} Task OVERDUE by {{ (delta.days | abs) }} day(s)  {{ '\n\n' -}} {{ item['summary'] }}
                 {% elif delta.days == 0 %} Task due TODAY {{ '\n\n' -}} {{ item['summary'] }}
-                {% endif %}
-              {% endif %}
+                {% endif -%}
+              {% endif -%}
             {% endfor -%}
           data:
             ttl: 0
